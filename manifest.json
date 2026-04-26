@@ -1,7 +1,7 @@
 {
-  "name": "Bee boy",
-  "short_name": "Bee boy",
-  "description": "Ứng dụng quản lý công việc Bee boy",
+  "name": "Bee girl",
+  "short_name": "Bee girl",
+  "description": "Ứng dụng quản lý công việc Bee girl",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
