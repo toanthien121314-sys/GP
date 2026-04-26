@@ -1,0 +1,21 @@
+{
+  "name": "Bee boy",
+  "short_name": "Bee boy",
+  "description": "Ứng dụng quản lý công việc Bee boy",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "./logo219.png",
+      "sizes": "219x219",
+      "type": "image/png"
+    },
+    {
+      "src": "./logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

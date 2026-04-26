@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bee boy</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #4ade80; --danger-color: #ff0000; --bg-color: #ffffff; --card-bg: #ffffff; --text-main: #102a43; --text-secondary: #627d98; --border-light: #f1f5f9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', -apple-system, sans-serif; }
+        
+        /* Chống zoom, chống bôi đen và CHỐNG PULL-TO-REFRESH của trình duyệt */
+        body { 
+            background: var(--bg-color); min-height: 100vh; display: flex; justify-content: center; padding: 0; 
+            -webkit-user-select: none; -ms-user-select: none; user-select: none; touch-action: manipulation;
+            overscroll-behavior-y: none; 
+            overflow: hidden; 
+        }
+        
+        .container { background: var(--card-bg); width: 100%; max-width: 500px; padding: 30px 20px; position: relative; height: 100vh; overflow-y: auto; }
+        
+        .date-picker-wrapper { position: absolute; top: 30px; right: 20px; text-align: right; }
+        #install-btn { background: var(--primary-color); color: white; border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-right: 5px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+        
+        /* Đổi nút chọn ngày cho hợp giao diện mới */
+        #date-btn { background: #f8fafc; border: 1px solid var(--border-light); padding: 8px 12px; border-radius: 10px; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s; }
+        #date-btn:active { transform: scale(0.95); background: #e2e8f0; }
+        
+        header h1 { color: var(--text-main); font-size: 2rem; margin-bottom: 5px; letter-spacing: -0.5px; }
+        #selected-date-display { font-size: 0.9rem; color: var(--primary-color); font-weight: 600; margin-bottom: 25px; display: block; }
+        #theme-settings-btn { font-size: 1.1rem; color: var(--text-secondary); cursor: pointer; margin-left: 8px; vertical-align: middle; transition: 0.3s; opacity: 0.5; }
+        #theme-settings-btn:hover { opacity: 1; color: var(--primary-color); transform: rotate(45deg); }
+        
+        #category-container { margin-bottom: 15px; }
+        #category-bar { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; align-items: center; }
+        #category-bar::-webkit-scrollbar { display: none; }
+        .cat-tag { padding: 6px 15px; border-radius: 20px; border: 1.5px solid #e2e8f0; background: #f8fafc; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .cat-tag.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .cat-tag .remove-tag { margin-left: 8px; font-size: 0.7rem; opacity: 0.7; }
+        #add-tag-btn { background: none; border: 1px dashed #cbd5e0; color: #94a3b8; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; white-space: nowrap; }
+        .group-header { font-size: 0.75rem; color: var(--primary-color); font-weight: 800; margin: 15px 0 8px 5px; display: block; letter-spacing: 0.5px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 3px; }
+
+        .input-group { display: flex; gap: 12px; margin-bottom: 30px; }
+        input[type="text"] { flex: 1; padding: 16px 20px; border: 1.5px solid var(--border-light); border-radius: 18px; outline: none; font-size: 1rem; transition: 0.3s; background: #fafafa; -webkit-user-select: text; user-select: text; }
+        input[type="text"]:focus { border-color: var(--primary-color); background: #fff; box-shadow: none; }
+        #add-btn { background: var(--primary-color); color: white; border: none; width: 70px; border-radius: 18px; cursor: pointer; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        #add-btn:active { transform: scale(0.9); }
+        
+        .section-title { font-size: 0.8rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; display: flex; justify-content: space-between; }
+        ul { list-style: none; margin-bottom: 30px; }
+        li { background: #fff; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px; border: 1.5px solid var(--border-light); transition: all 0.3s ease; }
+        li.fade-out { opacity: 0 !important; transform: scale(0.9) !important; }
+        .check-btn { padding: 5px; cursor: pointer; font-size: 1.4rem; transition: 0.3s; }
+        .task-text { flex: 1; color: var(--text-main); font-size: 1rem; font-weight: 500; }
+        .del-btn { padding: 5px; cursor: pointer; font-size: 1.1rem; color: var(--danger-color); opacity: 0.4; transition: 0.3s; }
+        #completed-list li { border-color: transparent; background: #fdfdfd; }
+        #completed-list .task-text { text-decoration: line-through; color: var(--text-secondary); opacity: 0.6; }
+        .loading-text { text-align: center; color: var(--text-secondary); font-size: 0.9rem; padding: 20px; border: none !important; width: 100%; }
+
+        /* --- GIAO DIỆN LỊCH CUSTOM XỊN XÒ --- */
+        #custom-calendar-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(16, 42, 67, 0.4); backdrop-filter: blur(4px);
+            z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            display: flex; justify-content: center; align-items: flex-start; padding-top: 20px;
+        }
+        #custom-calendar-overlay.show { opacity: 1; pointer-events: auto; }
+        
+        #custom-calendar {
+            background: #fff; width: 90%; max-width: 380px; border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 20px;
+            transform: translateY(-120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #custom-calendar-overlay.show #custom-calendar { transform: translateY(0); }
+        
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .cal-header button { background: #f8fafc; border: none; width: 36px; height: 36px; border-radius: 12px; color: var(--text-main); font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+        .cal-header button:active { background: #e2e8f0; transform: scale(0.9); }
+        .cal-header h3 { font-size: 1.1rem; color: var(--text-main); margin: 0; }
+        
+        .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
+        .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .cal-day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 0.95rem; color: var(--text-main); font-weight: 600; cursor: pointer; border-radius: 12px; transition: 0.2s; }
+        .cal-day:hover { background: #f1f5f9; }
+        .cal-day.empty { pointer-events: none; }
+        .cal-day.today { color: var(--primary-color); background: rgba(74, 222, 128, 0.1); }
+        .cal-day.selected { background: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(74, 222, 128, 0.4); }
+        
+        .cal-swipe-hint { text-align: center; font-size: 0.75rem; color: #cbd5e0; margin-top: 15px; }
+
+        /* --- GIAO DIỆN MODAL THÊM THẺ --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(16, 42, 67, 0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 3000; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background: white; width: 85%; max-width: 320px; padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-content h3 { margin-bottom: 15px; color: var(--text-main); font-size: 1.1rem; }
+        .modal-content input[type="text"] { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #eee; margin-bottom: 20px; outline: none; font-size: 1rem; }
+        .color-selection { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .color-selection p { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
+        #new-tag-color { border: none; width: 45px; height: 45px; cursor: pointer; background: none; border-radius: 8px; }
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-actions button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-cancel { background: #f1f5f9; color: var(--text-secondary); }
+        .btn-confirm { background: var(--primary-color); color: white; }
+    </style>
+    <script>
+        (function() {
+            const savedColor = localStorage.getItem('bee_theme_color') || '#4ade80';
+            document.documentElement.style.setProperty('--primary-color', savedColor);
+        })();
+    </script>
+</head>
+<body>
+
+<div class="container" id="app-container">
+    <div class="date-picker-wrapper">
+        <button id="install-btn" style="display: none;"><i class="fas fa-download"></i> Tải App</button>
+        <button id="date-btn"><i class="fas fa-calendar-alt"></i> Hôm khác</button>
+    </div>
+    <header>
+        <h1>Bee boy 🐝 <i class="fas fa-cog" id="theme-settings-btn" title="Đổi màu chủ đề"></i></h1>
+        <input type="color" id="theme-picker" style="display: none;">
+        <span id="selected-date-display">Ngày: --/--/----</span>
+    </header>
+
+    <div id="category-container">
+        <div id="category-bar">
+            <div id="tag-list" style="display: flex; gap: 8px;"></div>
+            <button id="add-tag-btn" onclick="openAddTagModal()"><i class="fas fa-plus"></i> Thêm thẻ</button>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="task-input" placeholder="Việc cần làm?" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button id="add-btn"><i class="fas fa-plus"></i></button>
+    </div>
+
+    <div class="section-title">Việc cần làm <span id="pending-count">0</span></div>
+    <ul id="pending-list"></ul>
+    <div class="section-title">Đã hoàn thành <span id="completed-count">0</span></div>
+    <ul id="completed-list"></ul>
+
+    <div id="custom-calendar-overlay">
+        <div id="custom-calendar">
+            <div class="cal-header">
+                <button id="cal-prev"><i class="fas fa-chevron-left"></i></button>
+                <h3 id="cal-title">Tháng --, ----</h3>
+                <button id="cal-next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="cal-weekdays">
+                <span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span>
+            </div>
+            <div class="cal-days" id="cal-grid"></div>
+            <div class="cal-swipe-hint"><i class="fas fa-chevron-up"></i> Vuốt lên để đóng</div>
+        </div>
+    </div>
+
+    <div id="tag-modal-overlay" class="modal-overlay" onclick="if(event.target === this) closeAddTagModal()">
+        <div class="modal-content">
+            <h3>Tạo thẻ mới</h3>
+            <input type="text" id="new-tag-name" placeholder="Tên thẻ (VD: Kho, CSVC...)" autocomplete="off">
+            <div class="color-selection">
+                <p>Màu đại diện:</p>
+                <input type="color" id="new-tag-color" value="#4ade80">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAddTagModal()">Hủy</button>
+                <button class="btn-confirm" onclick="confirmAddTag()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(e => console.log(e))); }
+    let deferredPrompt; const installBtn = document.getElementById('install-btn');
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'inline-block'; });
+    installBtn.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') installBtn.style.display = 'none'; deferredPrompt = null; } });
+
+    function getLocalDateString(dateObj) {
+        const d = dateObj ? new Date(dateObj) : new Date();
+        const offset = d.getTimezoneOffset() * 60000;
+        return (new Date(d.getTime() - offset)).toISOString().slice(0, 10);
+    }
+
+    window.onload = function() {
+        // --- LOGIC ĐỔI MÀU CHỦ ĐỀ ---
+        const themeBtn = document.getElementById('theme-settings-btn');
+        const themePicker = document.getElementById('theme-picker');
+        if(themePicker) {
+            const currentTheme = localStorage.getItem('bee_theme_color') || '#4ade80';
+            themePicker.value = currentTheme;
+            themePicker.oninput = (e) => {
+                const newColor = e.target.value;
+                document.documentElement.style.setProperty('--primary-color', newColor);
+                localStorage.setItem('bee_theme_color', newColor);
+            };
+        }
+        if(themeBtn && themePicker) { themeBtn.onclick = () => themePicker.click(); }
+
+        const input = document.getElementById('task-input');
+        const pendingList = document.getElementById('pending-list');
+        const completedList = document.getElementById('completed-list');
+
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyC8w_rGLICkj_cGCn1Xi1RtswHSVDXMFJBWgDcnX3P975qwUJ-ZlaE77U9kN6W529x/exec";
+
+        let selectedDate = getLocalDateString();
+        
+        // --- NÂNG CẤP DỮ LIỆU THẺ (HỖ TRỢ MÀU SẮC) ---
+        let categories = JSON.parse(localStorage.getItem('bee_categories')) || [
+            {name: "Chung", color: "#4ade80"}, {name: "Nhân sự", color: "#3b82f6"}, {name: "Kế toán", color: "#f59e0b"}
+        ];
+        // Sửa lỗi tự động nếu bản cũ đang lưu là chữ
+        if (categories.length > 0 && typeof categories[0] === 'string') {
+            categories = categories.map(name => ({ name: name, color: '#4ade80' }));
+        }
+        let currentCat = localStorage.getItem('bee_current_cat') || "Chung";
+
+        function saveAndSyncTags() {
+            localStorage.setItem('bee_categories', JSON.stringify(categories));
+            renderTagBar();
+            try { fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "save_categories", categories: categories }) }); } catch(e){}
+        }
+
+        function renderTagBar() {
+            const tagList = document.getElementById('tag-list');
+            tagList.innerHTML = "";
+            categories.forEach(cat => {
+                const isActive = currentCat === cat.name;
+                const btn = document.createElement('button');
+                btn.className = `cat-tag ${isActive ? 'active' : ''}`;
+                
+                // Áp dụng màu riêng cho thẻ
+                if (isActive) {
+                    btn.style.backgroundColor = cat.color;
+                    btn.style.color = "white";
+                    btn.style.borderColor = cat.color;
+                } else {
+                    btn.style.backgroundColor = "transparent";
+                    btn.style.color = cat.color;
+                    btn.style.borderColor = cat.color;
+                }
+
+                btn.innerHTML = `${cat.name}${cat.name !== 'Chung' ? ' <i class="fas fa-times remove-tag"></i>' : ''}`;
+                btn.onclick = (e) => {
+                    if (e.target.classList.contains('remove-tag')) {
+                        categories = categories.filter(c => c.name !== cat.name);
+                        saveAndSyncTags();
+                    } else {
+                        currentCat = cat.name;
+                        localStorage.setItem('bee_current_cat', cat.name);
+                        renderTagBar();
+                    }
+                };
+                tagList.appendChild(btn);
+            });
+        }
+        
+        // --- LOGIC HỘP THOẠI (MODAL) ---
+        window.openAddTagModal = () => { document.getElementById('tag-modal-overlay').classList.add('show'); document.getElementById('new-tag-name').focus(); };
+        window.closeAddTagModal = () => { document.getElementById('tag-modal-overlay').classList.remove('show'); document.getElementById('new-tag-name').value = ''; };
+        window.confirmAddTag = () => {
+            const name = document.getElementById('new-tag-name').value.trim();
+            const color = document.getElementById('new-tag-color').value;
+            if (name && !categories.find(c => c.name === name)) {
+                categories.push({ name: name, color: color });
+                saveAndSyncTags();
+                closeAddTagModal();
+            }
+        };
+        renderTagBar();
+
+        function updateStats() {
+            const spinner = "<i class='fas fa-circle-notch fa-spin' style='font-size: 0.8rem; color: var(--primary-color);'></i>";
+            const isPloading = pendingList.querySelector('.loading-text');
+            const isCloading = completedList.querySelector('.loading-text');
+            document.getElementById('pending-count').innerHTML = isPloading ? spinner : pendingList.querySelectorAll('li:not(.loading-text)').length;
+            document.getElementById('completed-count').innerHTML = isCloading ? spinner : completedList.querySelectorAll('li:not(.loading-text)').length;
+        }
+
+        // --- TÌM MÀU CỦA THẺ ---
+        function getCatColor(catName) {
+            const cat = categories.find(c => c.name === catName);
+            return cat ? cat.color : 'var(--primary-color)';
+        }
+
+        // --- ĐÃ NÂNG CẤP ĐỂ TRUYỀN MÀU XUỐNG TỪNG DÒNG ---
+        function renderTasks(noteText) {
+            pendingList.innerHTML = ""; completedList.innerHTML = "";
+            if (!noteText) return updateStats();
+
+            const lines = noteText.split('\n');
+            const pGroups = {}; const cGroups = {};
+
+            lines.forEach(line => {
+                if (!line.trim()) return;
+                const match = line.match(/\[(.*?)\]/);
+                const catName = match ? match[1] : "Chung";
+                if (line.includes("(hoàn thành)")) {
+                    if (!cGroups[catName]) cGroups[catName] = [];
+                    cGroups[catName].push(line);
+                } else {
+                    if (!pGroups[catName]) pGroups[catName] = [];
+                    pGroups[catName].push(line);
+                }
+            });
+
+            for (let cat in pGroups) {
+                const col = getCatColor(cat);
+                const header = document.createElement('span'); 
+                header.className = 'group-header'; 
+                header.innerText = cat.toUpperCase();
+                // Đổi màu chữ và viền đứt đoạn của tiêu đề nhóm
+                header.style.color = col;
+                header.style.borderBottomColor = col;
+                
+                pendingList.appendChild(header);
+                pGroups[cat].forEach(line => pendingList.appendChild(createRow(line.trim(), false, col)));
+            }
+            for (let cat in cGroups) {
+                const col = getCatColor(cat);
+                const header = document.createElement('span'); 
+                header.className = 'group-header'; 
+                header.innerText = cat.toUpperCase();
+                header.style.color = col;
+                header.style.borderBottomColor = col;
+
+                completedList.appendChild(header);
+                cGroups[cat].forEach(line => completedList.appendChild(createRow(line.trim(), true, col)));
+            }
+            updateStats();
+        }
+
+        async function loadTasksFromServer(date) {
+            const cache = localStorage.getItem('bee_cache_' + date);
+            if (cache !== null) {
+                renderTasks(cache);
+            } else {
+                const loader = "<li class='loading-text'><i class='fas fa-spinner fa-spin'></i> Đang tải...</li>";
+                pendingList.innerHTML = loader; completedList.innerHTML = loader; updateStats();
+            }
+
+            try {
+                const response = await fetch(`${WEB_APP_URL}?date=${date}`);
+                const data = await response.json();
+                
+                if (data.categories) {
+                    categories = data.categories; 
+                    if (categories.length > 0 && typeof categories[0] === 'string') {
+                        categories = categories.map(name => ({ name: name, color: '#4ade80' }));
+                    }
+                    localStorage.setItem('bee_categories', JSON.stringify(categories)); 
+                    renderTagBar();
+                }
+
+                const serverNote = data.note || "";
+                if (serverNote !== cache) {
+                    localStorage.setItem('bee_cache_' + date, serverNote); 
+                    // FIX LỖI VUỐT NHANH BỊ KẸT CHỮ "ĐANG TẢI": Chỉ hiển thị nếu người dùng vẫn đang xem ngày này
+                    if (date === selectedDate) renderTasks(serverNote);
+                }
+            } catch (error) {
+                if (cache === null && date === selectedDate) renderTasks("");
+            }
+        }
+
+        async function postToServer(fullLineText, actionType) {
+            try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date: selectedDate, note: fullLineText, action: actionType }) }); } catch (error) {}
+        }
+
+        document.getElementById('add-btn').onclick = () => {
+            const val = input.value.trim();
+            if (!val) return;
+            const taggedVal = currentCat === "Chung" ? val : `[${currentCat}] ${val}`;
+            
+            const oldCache = localStorage.getItem('bee_cache_' + selectedDate) || "";
+            const newCache = oldCache + (oldCache ? "\n" : "") + "- " + taggedVal;
+            localStorage.setItem('bee_cache_' + selectedDate, newCache);
+            
+            renderTasks(newCache); input.value = ""; postToServer(taggedVal, 'add');
+        };
+        input.onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('add-btn').click(); };
+
+        // --- ĐÃ NÂNG CẤP ĐỂ TÔ MÀU RIÊNG TỪNG DÒNG (THÊM BIẾN catColor) ---
+        function createRow(fullLineText, isDone, catColor) {
+            const cleanText = fullLineText.replace(/^-\s*(\d{2}:\d{2}:\s*)?/, "").replace(/\[.*?\]\s*/, "").replace(/\(hoàn thành\)$/, "").trim();
+            const li = document.createElement('li');
+            li.innerHTML = `<div class="check-btn"><i class="${isDone ? 'fas fa-check-circle' : 'far fa-circle'}"></i></div><span class="task-text">${cleanText}</span><div class="del-btn"><i class="fas fa-trash-alt"></i></div>`;
+            
+            // TÔ MÀU ICON CHECK VÀ THÊM VẠCH MÀU TRÁI (Làm cho App cực kỳ Pro)
+            li.querySelector('.check-btn').style.color = catColor;
+            li.style.borderLeft = `4px solid ${catColor}`;
+
+            li.querySelector('.check-btn').onclick = () => {
+                li.classList.add('fade-out'); 
+                setTimeout(() => {
+                    postToServer(fullLineText, isDone ? 'uncomplete' : 'complete'); 
+                    let currentCache = localStorage.getItem('bee_cache_' + selectedDate) || "";
+                    if(isDone) currentCache = currentCache.replace(fullLineText, fullLineText.replace(" (hoàn thành)", ""));
+                    else currentCache = currentCache.replace(fullLineText, fullLineText + " (hoàn thành)");
+                    localStorage.setItem('bee_cache_' + selectedDate, currentCache);
+                    renderTasks(currentCache);
+                }, 300); 
+            };
+
+            li.querySelector('.del-btn').onclick = () => {
+                li.classList.add('fade-out');
+                setTimeout(() => {
+                    postToServer(fullLineText, 'delete');
+                    let currentCache = localStorage.getItem('bee_cache_' + selectedDate) || "";
+                    currentCache = currentCache.split('\n').filter(l => l.trim() !== fullLineText.trim()).join('\n');
+                    localStorage.setItem('bee_cache_' + selectedDate, currentCache);
+                    renderTasks(currentCache);
+                }, 300);
+            };
+            return li;
+        }
+
+        const calOverlay = document.getElementById('custom-calendar-overlay');
+        const calGrid = document.getElementById('cal-grid');
+        const calTitle = document.getElementById('cal-title');
+        let calCurrentMonth = new Date(selectedDate);
+
+        function renderCalendar() {
+            calGrid.innerHTML = "";
+            const year = calCurrentMonth.getFullYear();
+            const month = calCurrentMonth.getMonth();
+            calTitle.innerText = `Tháng ${month + 1}, ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = getLocalDateString();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = "cal-day empty";
+                calGrid.appendChild(emptyDiv);
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDiv = document.createElement('div');
+                const thisDateStr = getLocalDateString(new Date(year, month, i));
+
+                dayDiv.className = "cal-day";
+                dayDiv.innerText = i;
+                
+                if (thisDateStr === todayStr) dayDiv.classList.add('today');
+                if (thisDateStr === selectedDate) dayDiv.classList.add('selected');
+
+                dayDiv.onclick = () => {
+                    selectedDate = thisDateStr;
+                    updateDateDisplay(selectedDate);
+                    loadTasksFromServer(selectedDate);
+                    closeCalendar();
+                };
+                calGrid.appendChild(dayDiv);
+            }
+        }
+
+        function openCalendar() { calCurrentMonth = new Date(selectedDate); renderCalendar(); calOverlay.classList.add('show'); }
+        function closeCalendar() { calOverlay.classList.remove('show'); }
+
+        document.getElementById('date-btn').onclick = openCalendar;
+        calOverlay.onclick = (e) => { if (e.target === calOverlay) closeCalendar(); };
+        document.getElementById('cal-prev').onclick = () => { calCurrentMonth.setMonth(calCurrentMonth.getMonth() - 1); renderCalendar(); };
+        document.getElementById('cal-next').onclick = () => { calCurrentMonth.setMonth(calCurrentMonth.getMonth() + 1); renderCalendar(); };
+
+        let touchStartX = 0; let touchStartY = 0; let touchEndX = 0; let touchEndY = 0;
+        const appContainer = document.getElementById('app-container');
+
+        appContainer.addEventListener('touchstart', function(event) {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, {passive: true});
+
+        appContainer.addEventListener('touchend', function(event) {
+            touchEndX = event.changedTouches[0].screenX;
+            touchEndY = event.changedTouches[0].screenY;
+            handleSwipe();
+        }, {passive: true});
+
+        function handleSwipe() {
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            const threshold = 60;
+
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
+                let currentDateObj = new Date(selectedDate);
+                if (diffX > 0) currentDateObj.setDate(currentDateObj.getDate() - 1);
+                else currentDateObj.setDate(currentDateObj.getDate() + 1);
+                
+                selectedDate = getLocalDateString(currentDateObj);
+                updateDateDisplay(selectedDate);
+                loadTasksFromServer(selectedDate);
+            } 
+            else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > threshold) {
+                if (diffY > 0 && appContainer.scrollTop === 0) {
+                    openCalendar();
+                } else if (diffY < 0 && calOverlay.classList.contains('show')) {
+                    closeCalendar();
+                }
+            }
+        }
+
+        function updateDateDisplay(dateStr) {
+            const d = new Date(dateStr);
+            document.getElementById('selected-date-display').innerText = `Ngày: ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+        }
+
+        function autoCleanupOldCache() {
+            const daysToKeep = 15;
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+            const cutoffStr = getLocalDateString(cutoffDate);
+
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('bee_cache_')) {
+                    const datePart = key.replace('bee_cache_', '');
+                    if (datePart < cutoffStr) {
+                        localStorage.removeItem(key);
+                        count++;
+                    }
+                }
+            }
+            if (count > 0) console.log("Đã dọn dẹp bộ nhớ cũ.");
+        }
+
+        async function preload30DaysBackground() {
+            const today = new Date();
+            for (let i = 0; i <= 30; i++) {
+                let t = new Date(); t.setDate(today.getDate() + i);
+                let ds = getLocalDateString(t);
+
+                if (!localStorage.getItem('bee_cache_' + ds)) {
+                    try {
+                        let res = await fetch(`${WEB_APP_URL}?date=${ds}`);
+                        if (res.ok) {
+                            let data = await res.json();
+                            localStorage.setItem('bee_cache_' + ds, data.note || "");
+                        }
+                        await new Promise(r => setTimeout(r, 300));
+                    } catch (e) { break; }
+                }
+            }
+        }
+
+        autoCleanupOldCache();
+        updateDateDisplay(selectedDate);
+        loadTasksFromServer(selectedDate);
+        setTimeout(preload30DaysBackground, 3000);
+    };
+</script>
+</body>
+</html>
