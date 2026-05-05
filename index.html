@@ -489,6 +489,8 @@
             const diffY = touchEndY - touchStartY;
             const threshold = 60;
 
+            // ĐÃ TẮT: Vuốt ngang (trái/phải) để chuyển ngày
+            /*
             if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
                 let currentDateObj = new Date(selectedDate);
                 if (diffX > 0) currentDateObj.setDate(currentDateObj.getDate() - 1);
@@ -498,7 +500,11 @@
                 updateDateDisplay(selectedDate);
                 loadTasksFromServer(selectedDate);
             } 
-            else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > threshold) {
+            else 
+            */
+            
+            // CHỈ GIỮ LẠI: Vuốt dọc (lên/xuống) để mở/đóng lịch
+            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > threshold) {
                 if (diffY > 0 && appContainer.scrollTop === 0) {
                     openCalendar();
                 } else if (diffY < 0 && calOverlay.classList.contains('show')) {
